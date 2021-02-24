@@ -11,7 +11,7 @@ import Foundation
 
 var clients = [Client]()
 var accounts = [Account]()
-let JSONFilehandlingObj = JSONFilehandling()
+let JSONFilehandlingObj = JSONFilehandling()	
 let accFileName = "accounts"
 let cliFileName = "clients"
 
