@@ -11,28 +11,28 @@ class JSONFilehandling{
     init(){}
     // converting Client object to string
     func getClientJsonString(obj: [Client]) -> String{
-        do{
-            let jsonEncoder = JSONEncoder()
-            let jsonData = try jsonEncoder.encode(obj)
-            if let json = String(data: jsonData, encoding: String.Encoding.utf8){
-                return json
-            }
-        }catch{
+        // do{
+        //     let jsonEncoder = JSONEncoder()
+        //     let jsonData = try jsonEncoder.encode(obj)
+        //     if let json = String(data: jsonData, encoding: String.Encoding.utf8){
+        //         return json
+        //     }
+        // }catch{
 
-        }
+        // }
         return ""
     }
 
     func getAccountJsonString(obj: [Account]) -> String {
-        do{
-            let jsonEncoder = JSONEncoder()
-            let jsonData = try jsonEncoder.encode(obj)
-            if let json = String(data: jsonData, encoding: String.Encoding.utf8){
-                return json
-            }
-        }catch{
+        // do{
+        //     let jsonEncoder = JSONEncoder()
+        //     let jsonData = try jsonEncoder.encode(obj)
+        //     if let json = String(data: jsonData, encoding: String.Encoding.utf8){
+        //         return json
+        //     }
+        // }catch{
 
-        }
+        // }
         return ""
     }
     
@@ -50,38 +50,38 @@ class JSONFilehandling{
     }
     
     func readAccountFile(fileName:String) -> [Account] {
-        if let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+        // if let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
             
-            let url = documentDirectory.appendingPathComponent(fileName + ".json")
-            let data = NSData(contentsOf: url)
-            do {
-                // converting data to object(i.e Account in our case)
-                if let payload = data as Data?{
-                    let account = try JSONDecoder().decode([Account].self, from: payload)
-                    return account
-                }
-            } catch {
+        //     let url = documentDirectory.appendingPathComponent(fileName + ".json")
+        //     let data = NSData(contentsOf: url)
+        //     do {
+        //         // converting data to object(i.e Account in our case)
+        //         if let payload = data as Data?{
+        //             let account = try JSONDecoder().decode([Account].self, from: payload)
+        //             return account
+        //         }
+        //     } catch {
                 
-              }
+        //       }
             
-        }
+        // }
         return []
     }
 
     func readClientFile(fileName:String) -> [Client] {
-        if let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+        // if let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
             
-            let url = documentDirectory.appendingPathComponent(fileName + ".json")
-            let data = NSData(contentsOf: url)
-            do {
-                // converting data to object(i.e Client in our case)
-                if let payload = data as Data?{
-                    let client = try JSONDecoder().decode([Client].self, from: payload)
-                    return client
-                }
-            } catch {  }
+        //     let url = documentDirectory.appendingPathComponent(fileName + ".json")
+        //     let data = NSData(contentsOf: url)
+        //     do {
+        //         // converting data to object(i.e Client in our case)
+        //         if let payload = data as Data?{
+        //             let client = try JSONDecoder().decode([Client].self, from: payload)
+        //             return client
+        //         }
+        //     } catch {  }
             
-        }
+        // }
         return []
     }
 }
