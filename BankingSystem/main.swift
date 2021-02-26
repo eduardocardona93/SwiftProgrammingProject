@@ -40,7 +40,7 @@ func loadFromFile(){
         //create an object of Client assuming the separated words are the inputs and appends it to the clients array
         clients.append(Client( firstName:fields[0], lastName:fields[1], id:Int(fields[2])!, address:fields[3], phoneNo:fields[1] ))
     }
-    // 
+    //
     for line in txtFilehandlingObj.readingFromLocalFile(fileName:accFileName) {
         //split each line into words which are fields
         let fields = line.components(separatedBy: ",")
@@ -51,7 +51,7 @@ func loadFromFile(){
             accounts.append( Checking( no: Int(fields[1])!, clientId: Int(fields[1])!, balance:Double(fields[2])!, overdraftFee: Double(fields[3])!) )
         }else if fields[0] == "Savings"{
             // appends a Savings account
-            accounts.append( Savings( no: Int(fields[1])!, clientId: Int(fields[1])!, balance:Double(fields[2])!, freeTransactions: Int(fields[3])!, transactionsCost: Double(fields[4])!)) 
+            accounts.append( Savings( no: Int(fields[1])!, clientId: Int(fields[1])!, balance:Double(fields[2])!, freeTransactions: Int(fields[3])!, transactionsCost: Double(fields[4])!))
         }
     }
 }
@@ -62,7 +62,7 @@ func loadFromFile(){
 func getAccountByNo(no:Int) -> Account? {
     // iterates all the accounts by object
     for account in accounts{
-        if account.accNo == no { // when matching the account number  
+        if account.accNo == no { // when matching the account number
             return account // return the Account object
         }
     }
@@ -86,88 +86,105 @@ func createAccount(clientId: Int) {
             repeat {
                 print("Enter account no:")
                 let no = Int(readLine()!)!
-                if getAccountIndex(no:no) < 0{
-                    print("Enter account type:")
-                    print("1. Checking")
-                    print("2. Savings")
+                // validates the existance of the account number
+                if getAccountIndex(no:no) < 0{ // if not found then create account
+                    print("""
+                    Enter account type:
+
+                    1. Checking
+                    2. Savings
+                    """)
+
+
                     let type = Int(readLine()!)!
-                    if type == 1{
+                    if type == 1{ // if checking ask for overdraft value
                         print("Enter overdraft fee (default: $300.00) :")
                         let overdraftFee = Double(readLine()!)!
                         accounts.append( Checking( no: no, clientId: clientId, balance:0.0, overdraftFee: overdraftFee) )
                         print("Checking account created succesfully")
-                    }else if type == 2{
+                    }else if type == 2{ // if savings ask for free transactions limit and transactions cost value
                         print("Enter free transactions limit (default: 5) :")
                         let freeTransactions = Int(readLine()!)!
                         print("Enter transactions cost (default: $5.00) :")
                         let transactionsCost = Double(readLine()!)!
                         accounts.append( Savings( no: no, clientId: clientId, balance:0.0, freeTransactions: freeTransactions, transactionsCost: transactionsCost) )
                         print("Savings account created succesfully")
+                    }else{ // wrong option selected
+                        print("Wrong input")
                     }
-                }else{
+                }else{ // if account already exists
                     print("The account with the number '\(no)' already exists ")
                 }
+                // keep adding acounts mesage
                 print("\n\nDo you want to create another account for this client?y/n")
             }while(readLine()! == "y")
-            saveToFileAccounts()
-        }else{
+            saveToFileAccounts() // saves all the accounts to the txt file
+        }else{ // if client does not exists
             print("Client not found")
         }
 }
-
+// edits an account (checking/savings) by its number (no)
 func editAccount(no: Int){
-    if let editAccount = getAccountByNo(no: no)  {
-        if editAccount is Savings{
-            let savAccount = (editAccount as! Savings)
+    if let editAccount = getAccountByNo(no: no)  { // if  account found then edit account
+        // validate the type of account
+        if editAccount is Savings{ // if savings ask for free transactions limit and transactions cost value
+            let savAccount = (editAccount as! Savings) // casts the Account object as Savings
             print("Enter free transactions limit (current value: \(savAccount.savFreeTransactions)) :")
             savAccount.savFreeTransactions = Int(readLine()!)!
             print("Enter transactions cost (current value: $\(String(format: "%.2f", savAccount.savTransactionsCost )) :")
             savAccount.savTransactionsCost = Double(readLine()!)!
-        }else if editAccount is Checking {
-            let chkAccount = (editAccount as! Checking)
+            print("Account edited Succesfully\n")
+            saveToFileAccounts() // saves all the accounts to the txt file
+        }else if editAccount is Checking { // if checking ask for overdraft value
+            let chkAccount = (editAccount as! Checking) // casts the Account object as Checking
             print("Enter overdraft fee (current value: $\(String(format: "%.2f", chkAccount.chkOverdraftFee ) ) :")
             chkAccount.chkOverdraftFee = Double(readLine()!)!
+            print("Account edited Succesfully\n")
+            saveToFileAccounts() // saves all the accounts to the txt file
         }
-        print("Account edited Succesfully\n")
-        saveToFileAccounts()
-    }else {
+
+    }else { // if  account found then print message
         print("Account number not found\n")
     }
 }
-
+// deletes an account (checking/savings) by its number (no)
+// in case there is at least 1 account left for the same client, asks for making a deposit to one of the accounts left
 func deleteAccount(no: Int) {
-    if let delAccount = getAccountByNo(no: no)  {
+    if let delAccount = getAccountByNo(no: no)  { // if account found then validate decision and get the object
         print("Do you really want to delete the account no. \(no)? y/n")
-        
-        if readLine()! == "y" {
+        if readLine()! == "y" { // reads the validation answer
+            // gets the account balance
             let balance = delAccount.accBalance
-            let clientAccounts = getClientAccounts(cliId: delAccount.accClientId)
+            // gets the index of the account to be deleted in the accounts array
             let index = getAccountIndex(no: no)
+            // deletes the account from the accounts array
             accounts.remove(at: index)
-            
-            if(clientAccounts.count > 1 && balance > 0) {
+            // gets all the client accounts left
+            let clientAccounts = getClientAccounts(cliId: delAccount.accClientId)
+            // validates if there is at least 1 account left for this client
+            // also, validates if the deleted has money left
+            if(clientAccounts.count > 0 && balance > 0) {
                 
-                print("The Client has more accounts")
+                print("\nThe Client has \(clientAccounts.count) account(s) left")
                 print("Do you want to deposit this account total balance ( $\(String(format: "%.2f", balance )) to another account? y/n")
+                // validates if wants to make a deposit to one of the remaining accounts
                 if(readLine()! == "y"){
                     print("Select the Account")
+                    // iterates all client's account with an index to select the one who gets the deposit
                     for (index,acc) in clientAccounts.enumerated(){
                         print("\((index + 1 )).  \(acc.accNo)")
                     }
-                    
                     let selectedAccount = Int(readLine()!)!
-                    clientAccounts[selectedAccount-1].DepositMoney(moneyTotal:balance)
+                    clientAccounts[selectedAccount-1].DepositMoney(moneyTotal:balance) // deposits the money
                     print("Deposit succesfully done!")
                 }
             }
-            saveToFileAccounts()
+            saveToFileAccounts() // saves all the accounts to the txt file
             print("Account Deleted succesfully!")
-            
         } else {
             print("Account not Deleted")
-            
         }
-    }else {
+    }else { // if  account found then print message
         print("Account number not found")
     }
 }
@@ -193,11 +210,23 @@ func getClientIndex(id:Int) -> Int {
     }
     return -1 // if not found return -1
 }
+//gets the all the accounts belonging to a client
+func getClientAccounts(cliId:Int) -> [Account] {
+    var cliAccs = [Account]() // empty result Accounts array
+    for account in accounts { // iterates all the accounts
+        if account.accClientId == cliId { // if the account client id match with the 'cliId'
+            cliAccs.append(account) // append it to the result array
+        }
+    }
+    return cliAccs // return the result array
+}
+// creates as many clients as the user wants
 func createClient(){
     repeat{
         print("\nEnter client id:")
         let id = Int(readLine()!)!
-        if(getClientIndex(id:id) < 0){
+        // validates if there is a client with the same 'id'
+        if(getClientIndex(id:id) < 0){ // not duplicate client found, create the client
             print("Enter client first name:")
             let firstName = readLine()!
             print("Enter client last name:")
@@ -208,18 +237,20 @@ func createClient(){
             let phoneNo = readLine()!
             clients.append(Client( firstName:firstName, lastName:lastName, id:id, address:address, phoneNo:phoneNo ))
             print("Client created succesfully!!\n")
-        }else{
+        }else{// duplicate client found
             print("There is already a client with this id number\n")
         }
+        // keep adding clients mesage
         print("Do you want to create another Client? y/n")
     }while readLine()! != "y"
-    saveToFileClients()
+    saveToFileClients() // saves all the clients to the txt file
 }
-
+// edits a client's info
 func editClient(id: Int){
-    let clientIndex = getClientIndex(id:id)
-    if clientIndex > -1 {
-        let client = clients[clientIndex]
+    let clientIndex = getClientIndex(id:id) // gets the client index
+    // validates if there is a client with the same 'id'
+    if clientIndex > -1 { // client found, edit information
+        let client = clients[clientIndex] // get the client object from the clients array
         print("Enter client first name:")
         client.cliFirstName = readLine()!
         print("Enter client last name:")
@@ -229,90 +260,64 @@ func editClient(id: Int){
         print("Enter client phone no:")
         client.cliPhoneNo = readLine()!
         print("Client info succesfully edited\n")
-        saveToFileClients()
-    }else{
-        print("Client id \(id) not found\n")
+        saveToFileClients() // saves all the clients to the txt file
+    }else{ // client does not exists
+        print("Client id '\(id)' not found\n")
     }
     
 }
-
+// changes a client's pin
 func changeClientPin(id:Int){
-    let clientIndex = getClientIndex(id:id)
-    if clientIndex > -1 {
-        let client = clients[clientIndex]
+    let clientIndex = getClientIndex(id:id)// gets the client index
+    // validates if there is a client with the same 'id'
+    if clientIndex > -1 {// client found, edit information
+        let client = clients[clientIndex] // get the client object from the clients array
         print("Enter your 4 number pin:")
         let pin1 = readLine()!
         print("Re-Enter your 4 number pin:")
         let pin2 = readLine()!
-        if(pin1 == pin2){
+        if(pin1 == pin2){ // if pins match then edit the value in the object
             client.cliPin = pin1
             print("Pin changed successfully\n")
-            saveToFileClients()
+            saveToFileClients() // saves all the clients to the txt file
         }else{
             print("The entered pins does not match\n")
         }
-    }else{
-        print("Client id \(id) not found\n")
-    }   
+    }else{ // client does not exists
+        print("Client id '\(id)' not found\n")
+    }
 }
-func deleteClient(id: Int) {
-    if let delClient = getClientById(id: id)  {
-        let clientAccounts = getClientAccounts(cliId: id)
-        print("Do you really want to delete the client '\( delClient.fullName() )'' and the \(clientAccounts) account(s) belonging to this client? y/n")
-        if readLine()! == "y" {
-            for acc in accounts {
-                let accIndex = getAccountIndex(no: acc.accNo)
-                accounts.remove(at: accIndex)
-            }
-            let cliIndex = getClientIndex(id:id)
-            clients.remove(at: cliIndex)
-            saveToFileClients()
-            saveToFileAccounts()
-            print("Client and accounts succesfully deleted\n")
 
+//deletes a client and all the accounts belonging to the client
+func deleteClient(id: Int) { // if client found then validate decision and get the object
+    if let delClient = getClientById(id: id)  {
+        let clientAccounts = getClientAccounts(cliId: id) // get client's accounts
+        print("Do you really want to delete the client '\( delClient.fullName() )' and the \(clientAccounts) account(s) belonging to this client? y/n")
+        if readLine()! == "y" {
+            // client's accounts itteration
+            for acc in clientAccounts {
+                let accIndex = getAccountIndex(no: acc.accNo) // gets the client's account index in the clients array
+                accounts.remove(at: accIndex) // delete client's account from clients array
+            }
+            let cliIndex = getClientIndex(id:id) // gets the client index in the clients array
+            clients.remove(at: cliIndex) // delete client from clients array
+            saveToFileClients() // saves all the clients to the txt file
+            saveToFileAccounts() // saves all the accounts to the txt file
+            print("Client and accounts succesfully deleted\n")
         }
+    }else{ // client does not exists
+        print("Client id '\(id)' not found\n")
     }
     
 }
 
 
-
-
-func getClientAccounts(cliId:Int) -> [Account] {
-    var cliAccs = [Account]()
-    for account in accounts {
-        if account.accClientId == cliId {
-            cliAccs.append(account)
-        }
-    }
-    return cliAccs
-}
-
-func getClientSavingsAccounts(cliId:Int) -> [Savings]{
-    var cliAccs = [Savings]()
-    for account in getClientAccounts(cliId:cliId){
-        if account is Savings {
-            cliAccs.append((account as! Savings))
-        }
-    }
-    return cliAccs
-}
-
-func getClientCheckingAccounts(cliId:Int) -> [Checking]{
-    var cliAccs = [Checking]()
-    for account in getClientAccounts(cliId:cliId){
-        if account is Checking {
-            cliAccs.append((account as! Checking))
-        }
-    }
-    return cliAccs
-}
-
-/************************************************** MENUS FUNCTIONS**********************************************/
-
+/************************************************** MENUS FUNCTIONS **********************************************/
+// admin's menu for clients management
 func adminClientsManagementMenu(){
-    while true {
+    while true { // infinite loop to do as many operations as the user wants
         print("""
+
             Select an option for clients management
 
             1. View all clients
@@ -322,93 +327,92 @@ func adminClientsManagementMenu(){
             5. Delete a client
 
             0. Return
-
         """)
-       switch Int(readLine()!)! {
-            case 1:
-                for client in clients{
-                    client.printClientDetails()
+        // menu case
+        switch Int(readLine()!)! {
+            case 1: // View all clients
+                for client in clients{ // iterates all the clients array
+                    client.printClientDetails() // print the client detail
                 }
-            case 2:
+            case 2: // Create clients
                 createClient()
-            case 3:
+            case 3: // Edit an existing client
                 print("Enter cliend id:")
                 let clientId = Int(readLine()!)!
                 editClient(id: clientId)
-            case 4:
+            case 4: // Change client's pin
                 print("Enter cliend id:")
                 let clientId = Int(readLine()!)!
                 changeClientPin(id: clientId)
-            case 5:
+            case 5: // Delete a client
                 print("Enter cliend id:")
                 let clientId = Int(readLine()!)!
                 deleteClient(id:clientId)
-            case 0:
+            case 0: // return to admin's main menu
                 break
-            default:
-                print("Wrong choice")
-        }
-    }
-}   
-func adminAccountsManagementMenu(){
-    while true {
-        print("""
-            Select an option for accounts management
-
-            1. View all accounts
-            2. Create a new account
-            3. Edit an existing account
-            3. Delete an account
-
-            0. Return
-        """)
-
-        switch Int(readLine()!)! {
-            case 1:
-                for acc in accounts{
-                    acc.printAccDetails()
-                }
-            case 2:
-                print("\nAdd a new accounts\n")
-                print("Enter cliend id:")
-                let clientId = Int(readLine()!)!
-                createAccount(clientId:clientId)
-
-            case 3:
-                print("Enter account no:")
-                let accNo = Int(readLine()!)!
-                editAccount(no:accNo)
-            case 4:
-                print("Enter account no:")
-                let accNo = Int(readLine()!)!
-                deleteAccount(no:accNo)
-            case 0:
-                break
-            default:
+            default: // wrong choice
                 print("Wrong choice")
         }
     }
 }
-
-func adminMenu (){
-    repeat {
-        // menu admin
+// admin's menu for accounts management
+func adminAccountsManagementMenu(){
+    while true { // infinite loop to do as many operations as the user wants
         print("""
+
+            Select an option for accounts management
+
+            1. View all accounts
+            2. Create new accounts
+            3. Edit an existing account
+            4. Delete an account
+
+            0. Return
+        """)
+        // menu case
+        switch Int(readLine()!)! {
+            case 1: //  View all accounts
+                for acc in accounts{  // iterates all the clients array
+                    acc.printAccDetails() // print the client detail
+                }
+            case 2:// Create new accounts
+                print("\nAdd new accounts\n")
+                print("Enter cliend id:")
+                let clientId = Int(readLine()!)!
+                createAccount(clientId:clientId)
+
+            case 3: // Edit an existing account
+                print("Enter account no:")
+                let accNo = Int(readLine()!)!
+                editAccount(no:accNo)
+            case 4: // Delete an account
+                print("Enter account no:")
+                let accNo = Int(readLine()!)!
+                deleteAccount(no:accNo)
+            case 0: // return to admin's main menu
+                break
+            default: // wrong choice
+                print("Wrong choice")
+        }
+    }
+}
+// admin's main menu
+func adminMenu (){
+    repeat { // infinite loop to do as many operations as the user wants
+        print("""
+
             What do you want to do?
 
-            1.Manage Clients
-            2.Manage Accounts
-
+            1. Manage Clients
+            2. Manage Accounts
         """)
-        
+        // menu case
         switch Int(readLine()!)! {
-            case 1:
+            case 1: // Manage Clients
                 adminClientsManagementMenu()
-            case 2:
+            case 2: //  Manage Accounts
                 adminAccountsManagementMenu()
-            case 0:
-                break
-            default:
+            default: // wrong choice
                 print("Wrong choice")
         }
         print("\n\nDo you want to do another process?y/n")
@@ -417,71 +421,74 @@ func adminMenu (){
 
 func clientMenu (clientObj: Client, accountObj: Account){
     repeat {
-        // menu admin
         print("""
+
             What do you want to do?
-            1. Display Your current balance 
-            2. Deposit money  
-            3. Draw money 
-            4. Transfer money to other accounts within the bank 
-            5. Pay utility bills  
+
+            1. Display Your current balance
+            2. Deposit money
+            3. Draw money
+            4. Transfer money to other accounts within the bank
+            5. Pay utility bills
             6. Edit your account Info
             7. Change your pin
-
         """)
+        // menu case
         switch Int(readLine()!)! {
-            // TODO
-            case 1:
+            case 1: // Display Your current balance
                 accountObj.printBalance()
-            case 2:
+            case 2: // Deposit money
                 print("Enter the amount you want to deposit")
-                let amountInput = Double(readLine()!)! 
-                accountObj.DepositMoney(moneyTotal:amountInput)
-                saveToFileAccounts()
+                let amountInput = Double(readLine()!)!
+                accountObj.DepositMoney(moneyTotal:amountInput) // deposits the money
+                saveToFileAccounts() // saves all the accounts to the txt file
 
-            case 3:
+            case 3: // Draw money
                 print("Enter the amount you want to draw")
-                let amountInput = Double(readLine()!)! 
-                if(accountObj.DrawMoney(moneyTotal:amountInput)){
-                    saveToFileAccounts()
+                let amountInput = Double(readLine()!)!
+                if(accountObj.DrawMoney(moneyTotal:amountInput)){ // if the draw was successful
+                    saveToFileAccounts() // saves all the accounts to the txt file
                 }
-            case 4:
-                let clientAccs = getClientAccounts(cliId:clientObj.cliId)
-                print("\nSelect your destination account")
-                for (i,acc) in clientAccs.enumerated(){
-                    print( "\((i+1)). \(acc.accNo) (\( type(of: acc) ))")
+            case 4: // Transfer money to other accounts within the bank
+                let clientAccs = getClientAccounts(cliId:clientObj.cliId) // gets the client accounts
+                print("\nSelect the index of the destination account:")
+                for (i,acc) in clientAccs.enumerated(){ // iterates the client accounts
+                    print( "\((i+1)). \(acc.accNo) (\( type(of: acc) ))") // print them with an index
                 }
-                let destIndex = Int(readLine()!)! 
-                let accountDestination = clientAccs[destIndex - 1]
-                
-                print("Enter the amount you want to transfer")
-                let amountInput = Double(readLine()!)! 
-                if(accountObj.transferToAccount(moneyTotal:amountInput, destination:accountDestination)){
-                    saveToFileAccounts()
+                let destIndex = Int(readLine()!)!
+                // validates the index account
+                if(destIndex > 0 && destIndex < clientAccs.count) {
+                    let accountDestination = clientAccs[destIndex - 1] // get the account object
+                    print("Enter the amount you want to transfer")
+                    let amountInput = Double(readLine()!)!
+                    if(accountObj.transferToAccount(moneyTotal:amountInput, destination:accountDestination)){ // if the transfer was successful
+                        saveToFileAccounts() // saves all the accounts to the txt file
+                    }
+                }else{
+                    print("Wrong input")
                 }
 
-            case 5:
 
+            case 5: // Pay utility bills
+                // require utility name
                 print("\nEnter the type of the bill (Ex. Wifi, Hydro, etc)")
                 let billType = readLine()!
-                
+                // require utility amount
                 print("Enter the amount of your bill")
-                let amountInput = Double(readLine()!)! 
-
-                if accountObj.DrawMoney(moneyTotal:amountInput) {
-                    saveToFileAccounts()
+                let amountInput = Double(readLine()!)!
+                if accountObj.DrawMoney(moneyTotal:amountInput) { // if the pay process was successful
+                    saveToFileAccounts() // saves all the accounts to the txt file
                     print("Your \(billType) bill has been paid")
                 }else{
                     print("Sorry, it was not possible to pay your \(billType) bill")
                 }
-            case 6:
+            case 6: // Edit your account Info
                 editClient(id:clientObj.cliId)
-            case 7:
+            case 7: // Change your pin
                 changeClientPin(id: clientObj.cliId)
-            default:
+            default: // wrong choice
                 print("Wrong choice")
         }
-
         print("\n\nDo you want to do another process?y/n")
     }while(readLine()! == "y")
 
@@ -492,60 +499,69 @@ func clientMenu (clientObj: Client, accountObj: Account){
 /************************************************** PROGRAM LAUNCH  **********************************************/
 // loads the clients and accounts from the files if exists
 loadFromFile()
+
+// Initial menu
 while true {
-    // menu main
-    print("\nWho are you?")
-    print("1. Admin")
-    print("2. Client")
-    
-    print("Enter '0' for exit")
-    let mainChoice = Int(readLine()!)!
-    
-    switch mainChoice {
-        case 1:
+    // Decides de type of user
+    print("""
+
+        Who are you?
+
+        1. Admin
+        2. Client
+
+        Enter '0' for exit
+    """)
+    // menu case
+    switch Int(readLine()!)! {
+        case 1: // Admin
             print("Type your password")
             let pass = readLine()!
-            if(pass == "Lambton2021") {
-                adminMenu()
+            if(pass == "Lambton2021") { // requests the password to the admin
+                adminMenu() // calls the admin menu
             } else {
                 print("Wrong Password")
             }
-        case 2:
+        case 2: // Client
             print("Enter cliend id:")
             let clientId = Int(readLine()!)!
-            var i = 3
-            if let client = getClientById(id:clientId) {
-                repeat {
+            if let client = getClientById(id:clientId) { // if client found
+                var i = 3 // attempts allowed
+                // gives 3 attempts to the client to enter the pin
+                repeat { // do-while loop for entering the client pin
                     print("Type your pin")
                     let pin = readLine()!
-                    if(client.cliPin == pin){
-                        let clientAccs = getClientAccounts(cliId:clientId)
-                        print("\nSelect your account")
-                        for (i,acc) in clientAccs.enumerated(){
-                            print( "\((i+1)). \(acc.accNo) (\( type(of: acc) ))")
+                    // validates the pin
+                    if(client.cliPin == pin) {  // successful pin typed
+                        let clientAccs = getClientAccounts(cliId:clientId) // gets the client accounts
+                        print("Select the index of the account you want to operate: \n")
+                        for (i,acc) in clientAccs.enumerated(){ // iterates the client accounts
+                            print( "\((i+1)). \(acc.accNo) (\( type(of: acc) ))") // print them with an index
                         }
-                        let accInput = Int(readLine()!)! 
+                        let accInput = Int(readLine()!)!
+                        // validates the index account
                         if(accInput > 0 && accInput < clientAccs.count){
-                            let account = clientAccs[accInput - 1]
-                            clientMenu(clientObj:client, accountObj:account)
+                            let account = clientAccs[accInput - 1] // get the account object
+                            clientMenu(clientObj:client, accountObj:account) // call the client menu
                         }else{
                             print("Wrong input")
                         }
-                    }else{
-                        i -= 1
-                        print("Wrong pin, you have \( (3-i) ) tries")
+                        break // do not repeat again the pin request
+                    }else{ // unsuccessful attempt
+                        i -= 1 // reduce attempts allowed
+                        print("Wrong pin, you have \( (i) ) attempts")
                     }
                 } while i > 0
-                if( i == 0){
-                    print("Sorry, your tries run out")
+                if( i == 0){ // not more attempts allowed
+                    print("Sorry, your attempts run out")
                 }
-            } else {
+            } else { // if client not found
                 print("Client id not found")
-            }   
-        case 0: 
-            print("Good bye!! Have a nice day")             
+            }
+        case 0: // Exit
+            print("Good bye!! Have a nice day")
             break
-        default: 
+        default: // Wrong option
             print("Wrong Option")
     }
     

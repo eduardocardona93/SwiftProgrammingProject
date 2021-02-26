@@ -11,7 +11,7 @@ import Foundation
 class txtFilehandling{ 
     
     init(){}
-
+    //function to read data from a file
     func readingFromLocalFile(fileName:String) -> [String.SubSequence]{
         do {
             // Get the saved data all the contnt of the text file as data
@@ -34,14 +34,14 @@ class txtFilehandling{
     }
 
 
-    //function to save data to a file
+    //function to save clients data to a file
     func saveClients(fileName:String, clients:[Client]) { 
         if let directoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
             // calling the filling function
             let fileURL = URL(fileURLWithPath: fileName, relativeTo: directoryURL).appendingPathExtension("txt")
-            //merging all lines form the array in one string
+            //merging all clients lines form the array in one string
             var myString:String = ""
-            for client in clients{
+            for client in clients {
                 myString += client.txtFileFormat()
             }
             //convert from string to data
@@ -58,12 +58,12 @@ class txtFilehandling{
         }
     }
 
-    //function to save data to a file
+    //function to save accounts data to a file
     func saveAccounts(fileName:String, accounts:[Account]) { 
         if let directoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
             // calling the filling function
             let fileURL = URL(fileURLWithPath: fileName, relativeTo: directoryURL).appendingPathExtension("txt")
-            //merging all lines form the array in one string
+            //merging all acounts lines form the array in one string
             var myString:String = ""
             for account in accounts{
                 myString += account.txtFileFormat()
