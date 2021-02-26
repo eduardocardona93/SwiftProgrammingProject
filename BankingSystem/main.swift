@@ -38,7 +38,7 @@ func loadFromFile(){
         //split each line into words which are fields
         let fields = line.components(separatedBy: ",")
         //create an object of Client assuming the separated words are the inputs and appends it to the clients array
-        clients.append(Client( firstName:fields[0], lastName:fields[1], id:Int(fields[2])!, address:fields[3], phoneNo:fields[1] ))
+        clients.append(Client( firstName:fields[0], lastName:fields[1], id:Int(fields[2])!, address:fields[3], phoneNo:fields[4] , pin:fields[5]))
     }
     //
     for line in txtFilehandlingObj.readingFromLocalFile(fileName:accFileName) {
@@ -48,10 +48,10 @@ func loadFromFile(){
         // as the first word is the type of the account, this will split the decision of appending a savings or checking account
         if fields[0] == "Checking" {
             // appends a Checking account
-            accounts.append( Checking( no: Int(fields[1])!, clientId: Int(fields[1])!, balance:Double(fields[2])!, overdraftFee: Double(fields[3])!) )
+            accounts.append( Checking( no: Int(fields[1])!, clientId: Int(fields[2])!, balance:Double(fields[3])!, overdraftFee: Double(fields[4])!) )
         }else if fields[0] == "Savings"{
             // appends a Savings account
-            accounts.append( Savings( no: Int(fields[1])!, clientId: Int(fields[1])!, balance:Double(fields[2])!, freeTransactions: Int(fields[3])!, transactionsCost: Double(fields[4])!))
+            accounts.append( Savings( no: Int(fields[1])!, clientId: Int(fields[2])!, balance:Double(fields[3])!, freeTransactions: Int(fields[4])!, transactionsCost: Double(fields[5])!))
         }
     }
 }
@@ -88,18 +88,15 @@ func createAccount(clientId: Int) {
                 let no = Int(readLine()!)!
                 // validates the existance of the account number
                 if getAccountIndex(no:no) < 0{ // if not found then create account
-                    print("""
-                    Enter account type:
-
-                    1. Checking
-                    2. Savings
-                    """)
-
+                    print("\nEnter account type:\n")
+                    print("1. Checking")
+                    print("2. Savings\n")
 
                     let type = Int(readLine()!)!
                     if type == 1{ // if checking ask for overdraft value
                         print("Enter overdraft fee (default: $300.00) :")
                         let overdraftFee = Double(readLine()!)!
+                        // append Account to the array
                         accounts.append( Checking( no: no, clientId: clientId, balance:0.0, overdraftFee: overdraftFee) )
                         print("Checking account created succesfully")
                     }else if type == 2{ // if savings ask for free transactions limit and transactions cost value
@@ -107,6 +104,7 @@ func createAccount(clientId: Int) {
                         let freeTransactions = Int(readLine()!)!
                         print("Enter transactions cost (default: $5.00) :")
                         let transactionsCost = Double(readLine()!)!
+                        // append Account to the array
                         accounts.append( Savings( no: no, clientId: clientId, balance:0.0, freeTransactions: freeTransactions, transactionsCost: transactionsCost) )
                         print("Savings account created succesfully")
                     }else{ // wrong option selected
@@ -159,6 +157,8 @@ func deleteAccount(no: Int) {
             let index = getAccountIndex(no: no)
             // deletes the account from the accounts array
             accounts.remove(at: index)
+            print("Account Deleted succesfully!")
+
             // gets all the client accounts left
             let clientAccounts = getClientAccounts(cliId: delAccount.accClientId)
             // validates if there is at least 1 account left for this client
@@ -180,7 +180,6 @@ func deleteAccount(no: Int) {
                 }
             }
             saveToFileAccounts() // saves all the accounts to the txt file
-            print("Account Deleted succesfully!")
         } else {
             print("Account not Deleted")
         }
@@ -235,14 +234,19 @@ func createClient(){
             let address = readLine()!
             print("Enter client phone no:")
             let phoneNo = readLine()!
-            clients.append(Client( firstName:firstName, lastName:lastName, id:id, address:address, phoneNo:phoneNo ))
+            clients.append(Client( firstName:firstName, lastName:lastName, id:id, address:address, phoneNo:phoneNo )) // append client to array
             print("Client created succesfully!!\n")
+
+            print("Do you want to create a account for this client? y/n")
+            if(readLine()! == "y"){ // if the user wants to create the accounts
+                createAccount(clientId:id) // call the account creation method
+            }
         }else{// duplicate client found
             print("There is already a client with this id number\n")
         }
         // keep adding clients mesage
         print("Do you want to create another Client? y/n")
-    }while readLine()! != "y"
+    }while readLine()! == "y"
     saveToFileClients() // saves all the clients to the txt file
 }
 // edits a client's info
@@ -287,12 +291,11 @@ func changeClientPin(id:Int){
         print("Client id '\(id)' not found\n")
     }
 }
-
 //deletes a client and all the accounts belonging to the client
 func deleteClient(id: Int) { // if client found then validate decision and get the object
     if let delClient = getClientById(id: id)  {
         let clientAccounts = getClientAccounts(cliId: id) // get client's accounts
-        print("Do you really want to delete the client '\( delClient.fullName() )' and the \(clientAccounts) account(s) belonging to this client? y/n")
+        print("Do you really want to delete the client '\( delClient.fullName() )' and the \(clientAccounts.count) account(s) belonging to this client? y/n")
         if readLine()! == "y" {
             // client's accounts itteration
             for acc in clientAccounts {
@@ -315,22 +318,21 @@ func deleteClient(id: Int) { // if client found then validate decision and get t
 /************************************************** MENUS FUNCTIONS **********************************************/
 // admin's menu for clients management
 func adminClientsManagementMenu(){
-    while true { // infinite loop to do as many operations as the user wants
-        print("""
+    var choice = -1
+    repeat { // infinite loop to do as many operations as the user wants
+        print("\nSelect an option for clients management\n")
+        print("1. View all clients")
+        print("2. Create clients")
+        print("3. Edit an existing client")
+        print("4. Change client's pin")
+        print("5. Delete a client\n")
+        print("0. Return to main menu\n")
 
-            Select an option for clients management
-
-            1. View all clients
-            2. Create clients
-            3. Edit an existing client
-            4. Change client's pin
-            5. Delete a client
-
-            0. Return
-        """)
         // menu case
-        switch Int(readLine()!)! {
+        choice = Int(readLine()!)!
+        switch choice {
             case 1: // View all clients
+                print("List of clients\n")
                 for client in clients{ // iterates all the clients array
                     client.printClientDetails() // print the client detail
                 }
@@ -348,30 +350,29 @@ func adminClientsManagementMenu(){
                 print("Enter cliend id:")
                 let clientId = Int(readLine()!)!
                 deleteClient(id:clientId)
-            case 0: // return to admin's main menu
-                break
+            case 0: 
+                print("Returning to main menu")
             default: // wrong choice
                 print("Wrong choice")
         }
-    }
+    }while(choice != 0)
+
 }
 // admin's menu for accounts management
 func adminAccountsManagementMenu(){
-    while true { // infinite loop to do as many operations as the user wants
-        print("""
-
-            Select an option for accounts management
-
-            1. View all accounts
-            2. Create new accounts
-            3. Edit an existing account
-            4. Delete an account
-
-            0. Return
-        """)
+    var choice = -1
+    repeat { // loop to do as many operations as the user wants
+        print("\nSelect an option for accounts management\n")
+        print("1. View all accounts")
+        print("2. Create new accounts")
+        print("3. Edit an existing account")
+        print("4. Delete an account\n")
+        print("0. Return to main menu\n")
         // menu case
-        switch Int(readLine()!)! {
+        choice = Int(readLine()!)!
+        switch choice {
             case 1: //  View all accounts
+                print("List of accounts\n")
                 for acc in accounts{  // iterates all the clients array
                     acc.printAccDetails() // print the client detail
                 }
@@ -389,52 +390,54 @@ func adminAccountsManagementMenu(){
                 print("Enter account no:")
                 let accNo = Int(readLine()!)!
                 deleteAccount(no:accNo)
-            case 0: // return to admin's main menu
-                break
+            case 0: 
+                print("Returning to main menu")
             default: // wrong choice
                 print("Wrong choice")
         }
-    }
+    }while(choice != 0)
+
 }
 // admin's main menu
 func adminMenu (){
+    var choice = -1
     repeat { // infinite loop to do as many operations as the user wants
-        print("""
 
-            What do you want to do?
+        print("\nWhat do you want to do?\n")
+        print("1. Manage Clients")
+        print("2. Manage Accounts\n")
+        print("0. Log out\n")
 
-            1. Manage Clients
-            2. Manage Accounts
-        """)
         // menu case
-        switch Int(readLine()!)! {
+        choice = Int(readLine()!)!
+        switch choice {
             case 1: // Manage Clients
                 adminClientsManagementMenu()
             case 2: //  Manage Accounts
                 adminAccountsManagementMenu()
+            case 0: 
+                print("Logging out..")
             default: // wrong choice
                 print("Wrong choice")
         }
-        print("\n\nDo you want to do another process?y/n")
-    }while(readLine()! == "y")
+    }while(choice != 0)
 }
 
 func clientMenu (clientObj: Client, accountObj: Account){
+    var choice = -1
     repeat {
-        print("""
-
-            What do you want to do?
-
-            1. Display Your current balance
-            2. Deposit money
-            3. Draw money
-            4. Transfer money to other accounts within the bank
-            5. Pay utility bills
-            6. Edit your account Info
-            7. Change your pin
-        """)
+        print("\nWhat do you want to do?\n")
+        print("1. Display Your current balance")
+        print("2. Deposit money")
+        print("3. Draw money")
+        print("4. Transfer money to other accounts within the bank")
+        print("5. Pay utility bills")
+        print("6. Edit your account Info")
+        print("7. Change your pin\n")
+        print("0. Log out\n")
         // menu case
-        switch Int(readLine()!)! {
+        choice = Int(readLine()!)!
+        switch choice {
             case 1: // Display Your current balance
                 accountObj.printBalance()
             case 2: // Deposit money
@@ -457,7 +460,7 @@ func clientMenu (clientObj: Client, accountObj: Account){
                 }
                 let destIndex = Int(readLine()!)!
                 // validates the index account
-                if(destIndex > 0 && destIndex < clientAccs.count) {
+                if(destIndex > 0 && (destIndex-1) <= clientAccs.count) {
                     let accountDestination = clientAccs[destIndex - 1] // get the account object
                     print("Enter the amount you want to transfer")
                     let amountInput = Double(readLine()!)!
@@ -486,11 +489,12 @@ func clientMenu (clientObj: Client, accountObj: Account){
                 editClient(id:clientObj.cliId)
             case 7: // Change your pin
                 changeClientPin(id: clientObj.cliId)
+            case 0: 
+                print("Logging out")
             default: // wrong choice
                 print("Wrong choice")
         }
-        print("\n\nDo you want to do another process?y/n")
-    }while(readLine()! == "y")
+    }while(choice != 0)
 
 
 }
@@ -499,19 +503,13 @@ func clientMenu (clientObj: Client, accountObj: Account){
 /************************************************** PROGRAM LAUNCH  **********************************************/
 // loads the clients and accounts from the files if exists
 loadFromFile()
-
+    
 // Initial menu
-while true {
+repeat {
     // Decides de type of user
-    print("""
-
-        Who are you?
-
-        1. Admin
-        2. Client
-
-        Enter '0' for exit
-    """)
+    print("\nWhat are you?\n")
+    print("1. Admin")
+    print("2. Client\n")
     // menu case
     switch Int(readLine()!)! {
         case 1: // Admin
@@ -540,7 +538,7 @@ while true {
                         }
                         let accInput = Int(readLine()!)!
                         // validates the index account
-                        if(accInput > 0 && accInput < clientAccs.count){
+                        if(accInput > 0 && (accInput) <= clientAccs.count ){// as the indexes starts in 1 not 0 then array length is a valid value
                             let account = clientAccs[accInput - 1] // get the account object
                             clientMenu(clientObj:client, accountObj:account) // call the client menu
                         }else{
@@ -558,11 +556,11 @@ while true {
             } else { // if client not found
                 print("Client id not found")
             }
-        case 0: // Exit
-            print("Good bye!! Have a nice day")
-            break
         default: // Wrong option
             print("Wrong Option")
+
     }
     
-}
+    print("\n\nDo you want to do another process?y/n")
+}while(readLine()! == "y")
+

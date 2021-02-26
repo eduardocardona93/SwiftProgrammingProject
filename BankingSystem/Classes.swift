@@ -26,6 +26,15 @@ class Client {
         self.cliPhoneNo = phoneNo
         self.cliPin = "1234"
     }
+
+    init( firstName: String, lastName: String, id: Int, address: String, phoneNo: String, pin: String ) {
+        self.cliFirstName = firstName
+        self.cliLastName = lastName
+        self.cliId = id
+        self.cliAddress = address
+        self.cliPhoneNo = phoneNo
+        self.cliPin = pin
+    }
     // function to return the full name (first + last name)
     func fullName() -> String {
         return self.cliFirstName + " " + self.cliLastName
@@ -99,24 +108,23 @@ class Savings: Account {
     // function to draw money from the account
     // returns a boolean value to indicate whether the process had success or not 
     override func DrawMoney(moneyTotal:Double) -> Bool {
-        if  (self.savFreeTransactions > 0) { // if the user has free transactions left
+        var totalDeduct = moneyTotal
+        if  (self.savFreeTransactions > 0 ) { // if the user has free transactions left
             self.savFreeTransactions -= 1 // reduce the free transactions number
-            self.accBalance -= moneyTotal // deduct the money
+            print("Free transactions left: \(self.savFreeTransactions)")
+        }else{ // if the user run out of free transactions
+            print("Service Cost: $\(String(format: "%.2f", self.savTransactionsCost ))") // shows the cost
+            totalDeduct += self.savTransactionsCost   // add the transactions cost to the total deduction
+        }
+        if(self.accBalance - totalDeduct >= 0 ) { // if the balance is enough to draw the total deduction
+            self.accBalance -= totalDeduct  // deduct the money
             print("Savings account deduction successfully made")
+            
             self.printBalance() // prints the balance
             return true
-        }else{ // if the user run out of free transactions
-            let totalDeduct = self.savTransactionsCost + moneyTotal // add the transactions cost to the total deduction
-            if(self.accBalance - totalDeduct >= 0 ) { // if the balance is enough to draw the total deduction
-                self.accBalance -= totalDeduct  // deduct the money
-                print("Savings account deduction successfully made")
-                print("Service Cost: $\(String(format: "%.2f", self.savTransactionsCost ))") // shows the cost
-                self.printBalance() // prints the balance
-                return true
-            }else{ // not enough money
-                print("There is not enough funds for this operation")
-                return false
-            }
+        }else{ // not enough money
+            print("There is not enough funds for this operation")
+            return false
         }
     }
     // function to deposit money into the account
@@ -145,6 +153,8 @@ class Checking: Account {
     // function to draw money from the account
     // returns a boolean value to indicate whether the process had success or not 
     override func DrawMoney(moneyTotal:Double) -> Bool {
+        print(self.accBalance)
+        print(moneyTotal)
         if(self.accBalance <= moneyTotal) { // if the balance is enough to draw the money
             self.accBalance -= moneyTotal // deduct the money
             print("Checking account deduction successfully made")
