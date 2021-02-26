@@ -153,14 +153,12 @@ class Checking: Account {
     // function to draw money from the account
     // returns a boolean value to indicate whether the process had success or not 
     override func DrawMoney(moneyTotal:Double) -> Bool {
-        print(self.accBalance)
-        print(moneyTotal)
-        if(self.accBalance <= moneyTotal) { // if the balance is enough to draw the money
+        if(self.accBalance - moneyTotal >= 0) { // if the balance is enough to draw the money
             self.accBalance -= moneyTotal // deduct the money
             print("Checking account deduction successfully made")
             self.printBalance() // prints the balance
             return true
-        }else if (self.accBalance + self.chkOverdraftFee) <= moneyTotal { // if the balance plus the overdraft value is enough to draw the money
+        }else if (self.accBalance + self.chkOverdraftFee) - moneyTotal  >= 0  { // if the balance plus the overdraft value is enough to draw the money
             let overdraft = self.accBalance + self.chkOverdraftFee - moneyTotal // update the overdraft available value
             self.accBalance -= moneyTotal // deduct the money
             print("Checking account deduction successfully made")
