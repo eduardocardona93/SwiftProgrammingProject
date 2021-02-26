@@ -276,11 +276,11 @@ func changeClientPin(id:Int){
     // validates if there is a client with the same 'id'
     if clientIndex > -1 {// client found, edit information
         let client = clients[clientIndex] // get the client object from the clients array
-        print("Enter your 4 number pin:")
+        print("Enter your 4 number new pin:")
         let pin1 = readLine()!
-        print("Re-Enter your 4 number pin:")
+        print("Re-Enter your 4 number new pin:")
         let pin2 = readLine()!
-        if(pin1 == pin2){ // if pins match then edit the value in the object
+        if(pin1 == pin2) { // if pins match then edit the value in the object
             client.cliPin = pin1
             print("Pin changed successfully\n")
             saveToFileClients() // saves all the clients to the txt file
